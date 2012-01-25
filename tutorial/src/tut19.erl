@@ -16,7 +16,7 @@
 %% API Functions
 %%
 
-ping(0, Pong_Node) ->
+ping(0, _) ->
 	io:format("ping finished~n", []);
 
 ping(N, Pong_Node) ->
