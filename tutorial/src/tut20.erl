@@ -20,7 +20,7 @@ ping(N, Pong_Pid) ->
 	link(Pong_Pid),
 	ping1(N, Pong_Pid).
 
-pin1(0, _) -> 
+ping1(0, _) -> 
 	exit(ping);
 
 ping1(N, Pong_Pid) ->
