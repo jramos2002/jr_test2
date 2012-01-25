@@ -16,7 +16,7 @@
 %% API Functions
 %%
 
-say_something(What, 0) -> done;
+say_something(_, 0) -> done;
 
 say_something(What, Times) ->
 	io:format("~p~n", [What]),
