@@ -156,7 +156,7 @@ message(ToName, Message) ->
 			ok
 	end.
 
-%%% The client process which 
+%%% The client process which runs on each user node
 client(Server_Node, Name) -> 
 	{messenger, Server_Node} ! {self(), logon, Name},
     await_result(),
@@ -165,7 +165,6 @@ client(Server_Node, Name) ->
 client(Server_Node) -> 
 	receive
 		logoff ->
-			{messenger, Server_Node} ! {self(), logoff}, 
 			exit(normal);
 		{message_to, ToName, Message} ->
 			{messenger, Server_Node} ! {self(), message_to, ToName, Message}, 
