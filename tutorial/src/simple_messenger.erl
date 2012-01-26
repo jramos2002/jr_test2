@@ -6,7 +6,7 @@
 %%% User interface: 
 %%% logon(Name)
 %%% One user at
-%%% system messenger: and choose a suitable Name. If the Name
+%%% system messenger:    and choose a suitable Name. If the Name
 %%% is already logged in at another node or if someone else is
 %%% already logged in at the same node, login will be rejected
 %%% with a suitable error message.

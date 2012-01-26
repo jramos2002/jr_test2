@@ -18,7 +18,7 @@
 %%% any node.
 %%%
 %%% One node in the network of Erlang nodes runs a server which maintains
-%%% data about the logged on users. The server is registered as "messenger"
+%%% data about the logged    on users. The server is registered as "messenger"
 %%% Each node where there is a user logged on runs a client process registered
 %%% as "mess_client"
 %%%
