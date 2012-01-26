@@ -29,23 +29,23 @@
 %%% Reply {messenger, stop, user_exists_at_other_node} stops the client
 %%% Reply {messenger, logged_on} logon was successful 
 %%%
-%%% To server: {ClientPid, logoff}
-%%% Reply: {messenger, logged_off} 
-%%%
-%%% To server: {ClientPid, logoff}
-%%% Reply: no reply
-%%%
+%%% When the client terminates for some reason
+%%% To server: {'EXIT', ClientPid, Reason}
+%%% 
 %%% To server: {ClientPid, message_to, ToName, Message} send a message
 %%% Reply: {messenger, stop, you_are_not_logged_on} stops the client
 %%% Reply: {messenger, receiver_not_found} no user with this name logged on
 %%% Reply: {messenger, sent} Message has been sent (but no guarantee)
 %%%
-%%% To client: {message_from, Name, Message}, %%%
+%%% To client: {message_from, Name, Message}, 
+%%%
 %%% Protocol between the "commands" and the client
-%%% ---------------------------------------------- %%%
+%%% ---------------------------------------------- 
+%%%
 %%% Started: messenger:client(Server_Node, Name)
 %%% To client: logoff
-%%% To client: {message_to, ToName, Message} %%%
+%%% To client: {message_to, ToName, Message} 
+%%%
 %%% Configuration: change the server_node() function to return the
 %%% name of the node where the messenger server runs
 
@@ -58,7 +58,8 @@
 %%
 %% Exported Functions
 %%
--export([start_server/0, server/1, logon/1, logoff/0, message/2, client/2]).
+-export([start_server/0, server/0,
+	logon/1, logoff/0, message/2, client/2]).
 
 
 %%
@@ -71,15 +72,20 @@ server_node() ->
 
 %%% This is the server process for the "messenger"
 %%% the user list has the format [{ClientPid1, Name1},{ClientPid22, Name2},...]
+
+server() ->
+	process_flag(trap_exit, true), 
+	server([]).
+%% Server function
 server(User_List) ->
 	receive
 		{From, logon, Name} ->
-			New_User_List = server_logon(From, Name, User_List),
-			server(New_User_List); 
-		{From, logoff} ->
-			New_User_List = server_logoff(From, User_List),
+			New_User_List = server_logon(From, Name, User_List), 
 			server(New_User_List);
-		{From, message_to, To, Message} ->
+		{'EXIT', From, _} ->
+			New_User_List = server_logoff(From, User_List), 
+			server(New_User_List);
+		{From, message_to, To, Message} -> 
 			server_transfer(From, To, Message, User_List), 
 			io:format("list is now: ~p~n", [User_List]), 
 			server(User_List)
@@ -87,9 +93,10 @@ server(User_List) ->
 
 %%% Start the server 
 start_server() ->
-	register(messenger, spawn(messenger, server, [[]])).
+	register(messenger, spawn(messenger, server, [])).
 
 %%% Server adds a new user to the user list 
+
 server_logon(From, Name, User_List) ->
 	%% check if logged on anywhere else
 	case lists:keymember(Name, 2, User_List) of
@@ -97,9 +104,10 @@ server_logon(From, Name, User_List) ->
 			From ! {messenger, stop, user_exists_at_other_node}, %reject logon 
 			User_List;
 		false ->
-			From ! {messenger, logged_on},
-		[{From, Name} | User_List] %add user to the list
+		From ! {messenger, logged_on}, link(From),
+		[{From, Name} | User_List]
 	end.
+
 
 %%% Server deletes a user from the user list 
 server_logoff(From, User_List) ->
@@ -111,9 +119,10 @@ server_transfer(From, To, Message, User_List) ->
 	case lists:keysearch(From, 1, User_List) of
 		false ->
 			From ! {messenger, stop, you_are_not_logged_on};
-		{value, {From, Name}} ->
+		{value, {_, Name}} ->
 			server_transfer(From, Name, To, Message, User_List)
-		end.
+	end.
+
 
 %%% If the user exists, send the message 
 server_transfer(From, Name, To, Message, User_List) ->
@@ -122,27 +131,30 @@ server_transfer(From, Name, To, Message, User_List) ->
 		false ->
 			From ! {messenger, receiver_not_found};
 		{value, {ToPid, To}} ->
-			ToPid ! {message_from, Name, Message}, From ! {messenger, sent}
-		end.
+			ToPid ! {message_from, Name, Message}, 
+			From ! {messenger, sent}
+	end.
+
 
 %%% User Commands 
 logon(Name) ->
 	case whereis(mess_client) of 
 		undefined ->
-			register(mess_client,spawn(messenger, client, [server_node(), Name]));
-        _ -> 
-			already_logged_on
-    end.
+			register(mess_client,
+			spawn(messenger, client, [server_node(), Name]));
+		_ -> already_logged_on 
+	end.
 
 logoff() ->
 	mess_client ! logoff.
 
 message(ToName, Message) ->
 	case whereis(mess_client) of % Test if the client is running
-		undefined -> not_logged_on;
-	_ -> mess_client ! {message_to, ToName, Message}, 
-		 ok
-end.
+		undefined -> 
+			not_logged_on;
+		_ -> mess_client ! {message_to, ToName, Message}, 
+			ok
+	end.
 
 %%% The client process which 
 client(Server_Node, Name) -> 
