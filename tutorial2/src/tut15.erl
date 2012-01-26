@@ -47,7 +47,7 @@ start() ->
 	Pong_PID = spawn(tut15, pong, []),
 	%io:format("------------------~n", []),
 	%	io:format("------------------~n", []),
-	%io:format("~p~n", [Pong_PID]),
+	%%%io:format("~p~n", [Pong_PID]),
 	spawn(tut15, ping, [3, Pong_PID]).
 
 
