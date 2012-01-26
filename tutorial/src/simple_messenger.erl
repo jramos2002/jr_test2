@@ -150,6 +150,7 @@ client(Server_Node, Name) ->
     await_result(),
    	client(Server_Node).
 
+%%% The client process which
 client(Server_Node) -> 
 	receive
 		logoff ->
