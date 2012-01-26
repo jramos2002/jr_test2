@@ -1,6 +1,7 @@
 %% Author: jramos
 %% Created: 20/01/2012
 %% Description: TODO: Add description to tut9b
+%% Comment
 -module(tut9b).
 
 %%
